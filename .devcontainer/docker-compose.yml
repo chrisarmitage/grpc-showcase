@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    
+    # Mount your workspace for live editing
+    volumes:
+      - ..:/workspaces/grpc-showcase:cached
+      # Persist Go module cache for faster builds
+      - go-mod-cache:/go/pkg/mod
+    
+    # Keep container running for VS Code to attach
+    command: sleep infinity
+    
+volumes:
+  go-mod-cache:
