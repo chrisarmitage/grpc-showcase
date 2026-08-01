@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package dashboard;
+
+option go_package = "github.com/chrisarmitage/grpc-showcase/proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Message represents a status update for the dashboard
+message Message {
+  string content = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  Category category = 3;
+}
+
+message StatusResponse {
+  string msg = 1;
+}
+
+service StatusService {
+  rpc Status(google.protobuf.Empty) returns (StatusResponse);
+}
+
+// Category defines the type of message for panel routing
+enum Category {
+  SYSTEM = 0;
+  NETWORK = 1;
+  SECURITY = 2;
+}
+
+// StreamRequest is empty for simplicity
+message StreamRequest {}
+
+// DashboardService provides streaming status messages
+service DashboardService {
+  // StreamMessages returns a continuous stream of status messages
+  rpc StreamMessages(StreamRequest) returns (stream Message);
+}
