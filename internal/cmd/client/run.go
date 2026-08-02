@@ -31,7 +31,7 @@ func runClient(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	client := proto.NewStatusServiceClient(conn)
+	client := proto.NewUniServiceClient(conn)
 	resp, err := client.Status(context.Background(), &emptypb.Empty{})
 	if err != nil {
 		log.Fatalf("Error calling Status: %v", err)

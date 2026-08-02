@@ -31,7 +31,7 @@ func runServerStart(cmd *cobra.Command, args []string) {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterStatusServiceServer(s, &grpcserver.GrpcServer{})
+	pb.RegisterUniServiceServer(s, &grpcserver.GrpcServer{})
 
 	log.Printf("gRPC server listening on port 5050")
 	log.Printf("Use Ctrl+C to stop the server")

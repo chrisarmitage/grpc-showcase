@@ -9,7 +9,7 @@ import (
 )
 
 type GrpcServer struct {
-	pb.UnimplementedStatusServiceServer
+	pb.UnimplementedUniServiceServer
 }
 
 func (s *GrpcServer) Status(ctx context.Context, req *emptypb.Empty) (*pb.StatusResponse, error) {
