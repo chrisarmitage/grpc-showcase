@@ -72,10 +72,11 @@ const file_proto_api_proto_rawDesc = "" +
 	"\n" +
 	"\x0fproto/api.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"\"\n" +
 	"\x0eStatusResponse\x12\x10\n" +
-	"\x03msg\x18\x01 \x01(\tR\x03msg2E\n" +
+	"\x03msg\x18\x01 \x01(\tR\x03msg2\x86\x01\n" +
 	"\n" +
 	"UniService\x127\n" +
-	"\x06Status\x12\x16.google.protobuf.Empty\x1a\x15.proto.StatusResponseB.Z,github.com/chrisarmitage/grpc-showcase/protob\x06proto3"
+	"\x06Status\x12\x16.google.protobuf.Empty\x1a\x15.proto.StatusResponse\x12?\n" +
+	"\fStatusStream\x12\x16.google.protobuf.Empty\x1a\x15.proto.StatusResponse0\x01B.Z,github.com/chrisarmitage/grpc-showcase/protob\x06proto3"
 
 var (
 	file_proto_api_proto_rawDescOnce sync.Once
@@ -96,9 +97,11 @@ var file_proto_api_proto_goTypes = []any{
 }
 var file_proto_api_proto_depIdxs = []int32{
 	1, // 0: proto.UniService.Status:input_type -> google.protobuf.Empty
-	0, // 1: proto.UniService.Status:output_type -> proto.StatusResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	1, // 1: proto.UniService.StatusStream:input_type -> google.protobuf.Empty
+	0, // 2: proto.UniService.Status:output_type -> proto.StatusResponse
+	0, // 3: proto.UniService.StatusStream:output_type -> proto.StatusResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

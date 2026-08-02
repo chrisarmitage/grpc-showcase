@@ -10,6 +10,9 @@ run-server:
 run-client:
     go run ./cmd/grpc-showcase/main.go client run
 
+run-client-stream:
+    go run ./cmd/grpc-showcase/main.go client run --mode=stream
+
 proto:
 	@echo "Generating protobuf code..."
 	protoc --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. ./proto/api.proto

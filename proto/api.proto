@@ -8,6 +8,7 @@ import "google/protobuf/empty.proto";
 
 service UniService {
   rpc Status(google.protobuf.Empty) returns (StatusResponse);
+  rpc StatusStream(google.protobuf.Empty) returns (stream StatusResponse);
 }
 
 message StatusResponse {
