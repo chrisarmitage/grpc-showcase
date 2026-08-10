@@ -9,8 +9,13 @@ import "google/protobuf/empty.proto";
 service UniService {
   rpc Status(google.protobuf.Empty) returns (StatusResponse);
   rpc StatusStream(google.protobuf.Empty) returns (stream StatusResponse);
+  rpc Bidir(stream BidirMessage) returns (stream BidirMessage);
 }
 
 message StatusResponse {
+  string msg = 1;
+}
+
+message BidirMessage {
   string msg = 1;
 }

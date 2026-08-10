@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	UniService_Status_FullMethodName       = "/proto.UniService/Status"
 	UniService_StatusStream_FullMethodName = "/proto.UniService/StatusStream"
+	UniService_Bidir_FullMethodName        = "/proto.UniService/Bidir"
 )
 
 // UniServiceClient is the client API for UniService service.
@@ -30,6 +31,7 @@ const (
 type UniServiceClient interface {
 	Status(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*StatusResponse, error)
 	StatusStream(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StatusResponse], error)
+	Bidir(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[BidirMessage, BidirMessage], error)
 }
 
 type uniServiceClient struct {
@@ -69,12 +71,26 @@ func (c *uniServiceClient) StatusStream(ctx context.Context, in *empty.Empty, op
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type UniService_StatusStreamClient = grpc.ServerStreamingClient[StatusResponse]
 
+func (c *uniServiceClient) Bidir(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[BidirMessage, BidirMessage], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &UniService_ServiceDesc.Streams[1], UniService_Bidir_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[BidirMessage, BidirMessage]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type UniService_BidirClient = grpc.BidiStreamingClient[BidirMessage, BidirMessage]
+
 // UniServiceServer is the server API for UniService service.
 // All implementations must embed UnimplementedUniServiceServer
 // for forward compatibility.
 type UniServiceServer interface {
 	Status(context.Context, *empty.Empty) (*StatusResponse, error)
 	StatusStream(*empty.Empty, grpc.ServerStreamingServer[StatusResponse]) error
+	Bidir(grpc.BidiStreamingServer[BidirMessage, BidirMessage]) error
 	mustEmbedUnimplementedUniServiceServer()
 }
 
@@ -90,6 +106,9 @@ func (UnimplementedUniServiceServer) Status(context.Context, *empty.Empty) (*Sta
 }
 func (UnimplementedUniServiceServer) StatusStream(*empty.Empty, grpc.ServerStreamingServer[StatusResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method StatusStream not implemented")
+}
+func (UnimplementedUniServiceServer) Bidir(grpc.BidiStreamingServer[BidirMessage, BidirMessage]) error {
+	return status.Errorf(codes.Unimplemented, "method Bidir not implemented")
 }
 func (UnimplementedUniServiceServer) mustEmbedUnimplementedUniServiceServer() {}
 func (UnimplementedUniServiceServer) testEmbeddedByValue()                    {}
@@ -141,6 +160,13 @@ func _UniService_StatusStream_Handler(srv interface{}, stream grpc.ServerStream)
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type UniService_StatusStreamServer = grpc.ServerStreamingServer[StatusResponse]
 
+func _UniService_Bidir_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(UniServiceServer).Bidir(&grpc.GenericServerStream[BidirMessage, BidirMessage]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type UniService_BidirServer = grpc.BidiStreamingServer[BidirMessage, BidirMessage]
+
 // UniService_ServiceDesc is the grpc.ServiceDesc for UniService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -158,6 +184,12 @@ var UniService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "StatusStream",
 			Handler:       _UniService_StatusStream_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "Bidir",
+			Handler:       _UniService_Bidir_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "proto/api.proto",
