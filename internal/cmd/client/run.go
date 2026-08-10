@@ -9,19 +9,23 @@ import (
 	"github.com/chrisarmitage/grpc-showcase/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const (
-	runFuncName = "run"
-	runCmdDesc  = "Run the gRPC client"
-	modeSingle  = "single"
-	modeStream  = "stream"
-	modeBidir   = "bidir"
+	runFuncName  = "run"
+	runCmdDesc   = "Run the gRPC client"
+	modeSingle   = "single"
+	modeStream   = "stream"
+	modeBidir    = "bidir"
+	modeInsecure = "insecure"
+	modeTls      = "tls"
 )
 
 var runMode string
+var tlsMode string
 
 func RunCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -31,12 +35,30 @@ func RunCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&runMode, "mode", modeSingle, "Client run mode (single|stream|bidir)")
+	cmd.Flags().StringVar(&tlsMode, "tls", modeInsecure, "TLS mode (insecure|tls)")
 
 	return cmd
 }
 
 func runClient(cmd *cobra.Command, args []string) {
-	conn, err := grpc.NewClient("localhost:5050", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	var dialOption grpc.DialOption
+
+	switch tlsMode {
+	case modeInsecure:
+		dialOption = grpc.WithTransportCredentials(insecure.NewCredentials())
+		log.Printf("Starting gRPC client in insecure mode")
+	case modeTls:
+		creds, err := credentials.NewClientTLSFromFile("pki/server.crt", "")
+		if err != nil {
+			log.Fatalf("Failed to load TLS certificate from pki/server.crt: %v", err)
+		}
+		dialOption = grpc.WithTransportCredentials(creds)
+		log.Printf("Starting gRPC client in TLS mode")
+	default:
+		log.Fatalf("Invalid TLS mode %q. Accepted values are: %s|%s", tlsMode, modeInsecure, modeTls)
+	}
+
+	conn, err := grpc.NewClient("localhost:5050", dialOption)
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
