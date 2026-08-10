@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/chrisarmitage/grpc-showcase/proto"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -65,6 +67,12 @@ func runClient(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 
 	client := proto.NewUniServiceClient(conn)
+
+	if tlsMode == modeTls {
+		var p peer.Peer
+		client.Status(context.Background(), &emptypb.Empty{}, grpc.Peer(&p))
+		logPeerCert(&p)
+	}
 
 	switch runMode {
 	case modeSingle:
@@ -136,4 +144,21 @@ func runClient(cmd *cobra.Command, args []string) {
 	default:
 		log.Fatalf("Invalid mode %q. Accepted values are: %s|%s|%s", runMode, modeSingle, modeStream, modeBidir)
 	}
+}
+
+func logPeerCert(p *peer.Peer) {
+	if p == nil || p.AuthInfo == nil {
+		return
+	}
+	tlsInfo, ok := p.AuthInfo.(credentials.TLSInfo)
+	if !ok || len(tlsInfo.State.PeerCertificates) == 0 {
+		return
+	}
+	cert := tlsInfo.State.PeerCertificates[0]
+	log.Printf("Server TLS certificate:")
+	log.Printf("  Subject:      %s", cert.Subject)
+	log.Printf("  Organisation: %s", strings.Join(cert.Subject.Organization, ", "))
+	log.Printf("  Issuer:       %s", cert.Issuer)
+	log.Printf("  Valid from:   %s", cert.NotBefore.Format(time.RFC3339))
+	log.Printf("  Valid until:  %s", cert.NotAfter.Format(time.RFC3339))
 }
