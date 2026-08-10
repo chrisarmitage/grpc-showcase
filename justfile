@@ -20,3 +20,6 @@ proto:
 	@echo "Generating protobuf code..."
 	protoc --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. ./proto/api.proto
 	@echo "Protobuf code generated successfully"
+
+pki:
+    go run cmd/grpc-showcase/main.go ca generate

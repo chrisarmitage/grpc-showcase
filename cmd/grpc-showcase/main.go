@@ -16,6 +16,7 @@ func main() {
 
 	rootCmd.AddCommand(cmd.ServerCmd())
 	rootCmd.AddCommand(cmd.ClientCmd())
+	rootCmd.AddCommand(cmd.CaCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
