@@ -32,6 +32,7 @@ func GenerateCmd() *cobra.Command {
 }
 
 func generateCa(cmd *cobra.Command, args []string) error {
+	// Certificate Authority
 	caCert, caPrivKey, err := generateCaPki()
 	if err != nil {
 		return err
@@ -47,6 +48,7 @@ func generateCa(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Server
 	serverCert, serverPrivKey, err := generateClientPki("Server")
 	if err != nil {
 		return err
@@ -62,12 +64,34 @@ func generateCa(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+
+	// Client
+	clientCert, clientPrivKey, err := generateClientPki("Client")
+	if err != nil {
+		return err
+	}
+
+	clientCertBytes, err := signCertificate(clientCert, clientPrivKey, caCert, caPrivKey)
+	if err != nil {
+		return err
+	}
+
+	clientCertPEM, clientCertPrivKeyPEM, err := encodeCertificateAndKey(clientPrivKey, clientCertBytes)
+	if err != nil {
+		return err
+	}
+
 	err = writePki("ca", caPEM, caPrivKeyPEM)
 	if err != nil {
 		return err
 	}
 
 	err = writePki("server", serverCertPEM, serverCertPrivKeyPEM)
+	if err != nil {
+		return err
+	}
+
+	err = writePki("client", clientCertPEM, clientCertPrivKeyPEM)
 	if err != nil {
 		return err
 	}

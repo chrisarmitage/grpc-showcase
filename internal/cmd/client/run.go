@@ -2,8 +2,11 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"io"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -24,6 +27,7 @@ const (
 	modeBidir    = "bidir"
 	modeInsecure = "insecure"
 	modeTls      = "tls"
+	modeMtls     = "mtls"
 )
 
 var runMode string
@@ -37,7 +41,7 @@ func RunCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&runMode, "mode", modeSingle, "Client run mode (single|stream|bidir)")
-	cmd.Flags().StringVar(&tlsMode, "tls", modeInsecure, "TLS mode (insecure|tls)")
+	cmd.Flags().StringVar(&tlsMode, "tls", modeInsecure, "TLS mode (insecure|tls|mtls)")
 
 	return cmd
 }
@@ -56,8 +60,27 @@ func runClient(cmd *cobra.Command, args []string) {
 		}
 		dialOption = grpc.WithTransportCredentials(creds)
 		log.Printf("Starting gRPC client in TLS mode")
+	case modeMtls:
+		clientCert, err := tls.LoadX509KeyPair("pki/client.crt", "pki/client.key")
+		if err != nil {
+			log.Fatalf("Failed to load client certificate from pki/client.crt/pki/client.key: %v", err)
+		}
+		caCert, err := os.ReadFile("pki/ca.crt")
+		if err != nil {
+			log.Fatalf("Failed to read CA certificate from pki/ca.crt: %v", err)
+		}
+		caPool := x509.NewCertPool()
+		if !caPool.AppendCertsFromPEM(caCert) {
+			log.Fatalf("Failed to parse CA certificate from pki/ca.crt")
+		}
+		tlsCfg := &tls.Config{
+			Certificates: []tls.Certificate{clientCert},
+			RootCAs:      caPool,
+		}
+		dialOption = grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg))
+		log.Printf("Starting gRPC client in mTLS mode")
 	default:
-		log.Fatalf("Invalid TLS mode %q. Accepted values are: %s|%s", tlsMode, modeInsecure, modeTls)
+		log.Fatalf("Invalid TLS mode %q. Accepted values are: %s|%s|%s", tlsMode, modeInsecure, modeTls, modeMtls)
 	}
 
 	conn, err := grpc.NewClient("localhost:5050", dialOption)
@@ -68,25 +91,23 @@ func runClient(cmd *cobra.Command, args []string) {
 
 	client := proto.NewUniServiceClient(conn)
 
-	if tlsMode == modeTls {
-		var p peer.Peer
-		client.Status(context.Background(), &emptypb.Empty{}, grpc.Peer(&p))
-		logPeerCert(&p)
-	}
-
 	switch runMode {
 	case modeSingle:
-		resp, err := client.Status(context.Background(), &emptypb.Empty{})
+		var p peer.Peer
+		resp, err := client.Status(context.Background(), &emptypb.Empty{}, grpc.Peer(&p))
 		if err != nil {
 			log.Fatalf("Error calling Status: %v", err)
 		}
+		logPeerCert(&p)
 
 		log.Printf("Status response: %s", resp.Msg)
 	case modeStream:
-		stream, err := client.StatusStream(context.Background(), &emptypb.Empty{})
+		var p peer.Peer
+		stream, err := client.StatusStream(context.Background(), &emptypb.Empty{}, grpc.Peer(&p))
 		if err != nil {
 			log.Fatalf("Error calling StatusStream: %v", err)
 		}
+		logPeerCert(&p)
 
 		for {
 			resp, err := stream.Recv()
@@ -101,10 +122,12 @@ func runClient(cmd *cobra.Command, args []string) {
 			log.Printf("Status stream response: %s", resp.Msg)
 		}
 	case modeBidir:
-		stream, err := client.Bidir(context.Background())
+		var p peer.Peer
+		stream, err := client.Bidir(context.Background(), grpc.Peer(&p))
 		if err != nil {
 			log.Fatalf("Error calling Bidir: %v", err)
 		}
+		logPeerCert(&p)
 
 		recvDone := make(chan error, 1)
 		go func() {
